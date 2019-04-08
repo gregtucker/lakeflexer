@@ -12,7 +12,7 @@ from landlab.io import read_esri_ascii
 
 class LakeFlexer():
     """Calculate elastic lithosphere flexure for a (paleo)lake.
-    
+
     Landlab-built model that takes a digital elevation model and a target
     water-surface elevation, and calculates flexure resulting from the load of
     the water.
@@ -24,7 +24,6 @@ class LakeFlexer():
             self.initialized = False
         else:
             self.initialize(param_filename)
-            self.initialized = True
 
     def initialize(self, param_filename):
         
@@ -35,3 +34,5 @@ class LakeFlexer():
         self.elastic_thickness = params['elastic_thickness']
 
         # (more to be added here)
+
+        self.initialized = True
