@@ -76,7 +76,8 @@ class LakeFlexer():
             self.water_depth[self.water_depth < 0.0] = 0.0
 
             # Calculate loads
-            self.load[:] = self.water_density * self.grav_accel * self.water_depth
+            self.load[:] = (self.water_density * self.grav_accel
+                            * self.water_depth)
 
             # Calculate flexure and adjust elevations
             self.flexer.update()
@@ -86,6 +87,8 @@ class LakeFlexer():
             flexed_wse = (self.flexed_dem[self.water_depth > 0.0]
                           + self.water_depth[self.water_depth > 0.0])
             residual = self.water_surf_elev - flexed_wse
+            print('Iteration ' + str(i) + ' max residual = '
+                  + str(np.amax(np.abs(residual))))
             if np.amax(np.abs(residual)) < self.tolerance:
                 done = True
 
@@ -93,6 +96,9 @@ class LakeFlexer():
             if i > MAX_ITERATIONS:
                 print('Warning: maximum number of iterations exceeded')
                 done = True
+            
+        print('Done. Maximum deflextion = ' + str(np.amax(self.deflection))
+              + ' meters.')
 
     def finalize(self):
         """Output data to file."""
