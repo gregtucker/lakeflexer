@@ -76,3 +76,5 @@ def test_lake_flexer_with_line_load():
                                    2.803552e-01,  -8.630897e-04,
                                   -5.940185e-02,  -3.852951e-02,
                                   -1.271013e-02]))
+
+    os.remove('lake_flex.nc')

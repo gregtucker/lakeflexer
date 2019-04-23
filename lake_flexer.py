@@ -9,6 +9,7 @@ Created on Sun Apr  7 10:17:01 2019
 from landlab import load_params
 from landlab.components import Flexure
 from landlab.io import read_esri_ascii
+from landlab.io.netcdf import write_netcdf
 import numpy as np
 
 MAX_ITERATIONS = 100
@@ -94,7 +95,5 @@ class LakeFlexer():
                 done = True
 
     def finalize(self):
-        #TODO:
-        # - OUTPUT NETCDF AND/OR OTHER FILE FORMATS
-        # - BUILD A NOTEBOOK THAT READS SIMON'S COARSE DEM
-        print(self.grid.at_node['lithosphere_surface__elevation_increment'].reshape((13, 13)))
+        """Output data to file."""
+        write_netcdf("lake_flex.nc", self.grid)
