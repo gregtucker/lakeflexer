@@ -9,7 +9,9 @@ Created on Sun Apr  7 10:17:01 2019
 from landlab import load_params
 from landlab.components import Flexure
 from landlab.io import read_esri_ascii
+import numpy as np
 
+MAX_ITERATIONS = 100
 
 
 class LakeFlexer():
@@ -37,23 +39,23 @@ class LakeFlexer():
         self.grav_accel = params['gravitational_acceleration']
         self.water_surf_elev = params['water_surface_elevation']
         self.water_density = params['lake_water_density']
+        self.tolerance = params['lake_elev_tolerance']
 
         # Read DEM
         (self.grid, self.dem) = read_esri_ascii(params['dem_filename'])
+        
+        # Store a copy that we'll modify
+        self.flexed_dem = self.dem.copy()
 
         # Create and initialize Flexure component
         self.flexer = Flexure(self.grid, eet=self.elastic_thickness,
                               youngs=self.youngs_modulus, method="flexure",
                               rho_mantle=self.rho_m, gravity=self.grav_accel)
-        print('alpha = ' + str(self.flexer.alpha))
-        print('3/4 pi alpha = ' + str(0.75 * 3.1415926 * self.flexer.alpha))
-        print('pi alpha = ' + str(3.1415926 * self.flexer.alpha))
         self.load = self.grid.at_node['lithosphere__overlying_pressure_increment']
-
-        # (more to be added here?)
+        self.deflection = self.grid.at_node['lithosphere_surface__elevation_increment']
 
         self.initialized = True
-        
+
     def update(self):
 
         # Make sure model has been initialized
@@ -64,15 +66,35 @@ class LakeFlexer():
         except RuntimeError:
             raise
 
-        # Calculate water depths
-        self.water_depth = self.water_surf_elev - self.dem
-        self.water_depth[self.water_depth < 0.0] = 0.0
+        i = 0
+        done = False
+        while not done:
 
-        # Calculate loads
-        self.load[:] = self.water_density * self.grav_accel * self.water_depth
+            # Calculate water depths
+            self.water_depth = self.water_surf_elev - self.flexed_dem
+            self.water_depth[self.water_depth < 0.0] = 0.0
 
-        # Calculate flexure
-        self.flexer.update()
+            # Calculate loads
+            self.load[:] = self.water_density * self.grav_accel * self.water_depth
+
+            # Calculate flexure and adjust elevations
+            self.flexer.update()
+            self.flexed_dem = self.dem - self.deflection
+
+            # Compare modeled and desired water-surface elevations
+            flexed_wse = (self.flexed_dem[self.water_depth > 0.0]
+                          + self.water_depth[self.water_depth > 0.0])
+            residual = self.water_surf_elev - flexed_wse
+            if np.amax(np.abs(residual)) < self.tolerance:
+                done = True
+
+            i += 1
+            if i > MAX_ITERATIONS:
+                print('Warning: maximum number of iterations exceeded')
+                done = True
 
     def finalize(self):
+        #TODO:
+        # - OUTPUT NETCDF AND/OR OTHER FILE FORMATS
+        # - BUILD A NOTEBOOK THAT READS SIMON'S COARSE DEM
         print(self.grid.at_node['lithosphere_surface__elevation_increment'].reshape((13, 13)))

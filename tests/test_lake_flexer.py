@@ -9,7 +9,7 @@ Created on Sun Apr  7 10:17:15 2019
 import os
 import sys
 import numpy as np
-from numpy.testing import assert_raises, assert_array_equal, assert_array_almost_equal
+from numpy.testing import assert_raises, assert_array_almost_equal
 from landlab.io import write_esri_ascii
 from landlab import RasterModelGrid
 
@@ -38,6 +38,7 @@ def write_test_parameter_file(filename):
     f.write('mantle_density: 3300.0\n')
     f.write('gravitational_acceleration: 10.0\n')
     f.write('lake_water_density: 1000.0\n')
+    f.write('lake_elev_tolerance: 0.1\n')
     f.close()
 
 
@@ -68,12 +69,10 @@ def test_lake_flexer_with_line_load():
 
     deflection = lf.grid.at_node['lithosphere_surface__elevation_increment']
     assert_array_almost_equal(deflection[78:91],
-                       np.array([ -1.117830e-02,  -3.394216e-02,
-                                  -5.237843e-02,  -8.787396e-04,
-                                   2.468120e-01,   7.672625e-01,
-                                   1.201217e+00,   7.672625e-01,
-                                   2.468120e-01,  -8.787396e-04,
-                                  -5.237843e-02,  -3.394216e-02,
-                                  -1.117830e-02]))
-
-
+                       np.array([ -1.271013e-02,  -3.852951e-02,
+                                  -5.940185e-02,  -8.630897e-04,
+                                   2.803552e-01,   8.711002e-01,
+                                   1.363599e+00,   8.711002e-01,
+                                   2.803552e-01,  -8.630897e-04,
+                                  -5.940185e-02,  -3.852951e-02,
+                                  -1.271013e-02]))
