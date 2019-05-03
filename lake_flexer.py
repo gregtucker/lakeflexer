@@ -43,7 +43,9 @@ class LakeFlexer():
         self.tolerance = params['lake_elev_tolerance']
 
         # Read DEM
+        print('Reading DEM file...')
         (self.grid, self.dem) = read_esri_ascii(params['dem_filename'])
+        print('done.')
         
         # Store a copy that we'll modify
         self.flexed_dem = self.dem.copy()
@@ -70,8 +72,11 @@ class LakeFlexer():
         i = 0
         done = False
         while not done:
+            
+            print('Iteration ' + str(i) + ':')
 
             # Calculate water depths
+            print('  calculating water depth and loads...')
             self.water_depth = self.water_surf_elev - self.flexed_dem
             self.water_depth[self.water_depth < 0.0] = 0.0
 
@@ -80,6 +85,7 @@ class LakeFlexer():
                             * self.water_depth)
 
             # Calculate flexure and adjust elevations
+            print('  calculating flexure...')
             self.flexer.update()
             self.flexed_dem = self.dem - self.deflection
 
@@ -87,8 +93,7 @@ class LakeFlexer():
             flexed_wse = (self.flexed_dem[self.water_depth > 0.0]
                           + self.water_depth[self.water_depth > 0.0])
             residual = self.water_surf_elev - flexed_wse
-            print('Iteration ' + str(i) + ' max residual = '
-                  + str(np.amax(np.abs(residual))))
+            print('  max residual = ' + str(np.amax(np.abs(residual))))
             if np.amax(np.abs(residual)) < self.tolerance:
                 done = True
 
@@ -103,3 +108,17 @@ class LakeFlexer():
     def finalize(self):
         """Output data to file."""
         write_netcdf("lake_flex.nc", self.grid)
+
+
+if __name__ == '__main__':
+    
+    import sys
+    try:
+        param_filename = sys.argv[1]
+    except:
+        print('Must specify name of input file on command line')
+        raise
+
+    lf = LakeFlexer(param_filename)
+    lf.update()
+    lf.finalize()
